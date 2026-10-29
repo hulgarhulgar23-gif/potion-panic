@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080d22">
+<title>Potion Panic</title>
+<style>
+:root{color-scheme:dark;--black:#050711;--navy:#0c1430;--blue:#2455e8;--blue2:#183baf;--yellow:#ffdc4a;--ink:#fff;--soft:#e2e7fa;--muted:#bdc7e5;--line:#4863b2;--red:#ff555e;--green:#b9f36b}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--black);color:var(--ink);font-family:"Avenir Next","Trebuchet MS",system-ui,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:4px solid var(--yellow);outline-offset:3px}
+.app{max-width:1280px;margin:0 auto;padding:20px clamp(12px,3vw,32px) 44px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:2px solid #30447d;padding:0 0 14px;margin-bottom:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:1000;font-size:24px;line-height:.82;letter-spacing:-.07em;text-transform:uppercase}
+.brand span{display:block}.brand b{display:block;color:var(--yellow);font-size:.78em;letter-spacing:.02em;margin-top:5px}
+.brand svg{width:43px;height:46px;flex:none}
+.settings{display:flex;gap:8px;flex-wrap:wrap}
+.setting{background:#101a3d;color:var(--ink);border:2px solid #5169ae;padding:8px 10px;font:700 12px "SF Mono",Menlo,monospace}
+.setting strong{color:var(--yellow);margin-left:4px}
+.setting[aria-pressed="false"] strong{color:#c9cee0}
+.screen{display:none}.screen.active{display:block}
+h1{font-size:clamp(28px,4vw,42px);letter-spacing:-.05em;margin:0 0 6px}
+h2{font-size:20px;margin:20px 0 9px}
+p{margin:0;color:var(--soft)}
+.setup-wrap{max-width:850px;margin:22px auto 0}
+.steps{font-size:17px;color:var(--soft);margin-bottom:16px}
+.name-label,.house-label{display:block;font-weight:900;margin:17px 0 7px}
+.name-input{width:100%;height:50px;background:#080d20;color:#fff;border:2px solid #5368a6;padding:10px 13px;font-size:18px}
+.name-rule{font-size:12px;color:var(--soft);margin-top:5px}
+.name-feedback{min-height:20px;color:#ff858b;font-size:13px;margin-top:5px}
+.limit-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:15px 0 4px;padding:10px 12px;background:#101a3d;border:1px solid #5169ae;font-weight:800}
+.limit-setting strong{background:#080d20;border:2px solid #5368a6;padding:7px 9px;color:var(--yellow);font:900 14px "SF Mono",Menlo,monospace}
+.limit-help{font-size:12px;color:var(--soft);margin:5px 0 0}
+.house-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.house-card{display:flex;align-items:center;gap:11px;min-height:58px;text-align:left;background:#0d1530;color:#fff;border:2px solid #354b86;padding:8px 10px}
+.house-card:hover{background:#15234d}
+.house-card.selected{border:3px solid var(--yellow);background:#172753;box-shadow:4px 4px 0 #000}
+.swatch{width:30px;height:30px;flex:none;background:var(--house);border:2px solid #fff}
+.house-name{font-size:15px;font-weight:900;line-height:1.05}
+.start-button,.mix-button{border:0;background:var(--yellow);color:#111;font-weight:1000;text-transform:uppercase;letter-spacing:.03em;box-shadow:0 6px 0 #9a7910}
+.start-button{width:100%;min-height:56px;margin-top:16px;font-size:19px}
+.start-button:disabled{opacity:.42;cursor:not-allowed}
+.game-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,.8fr);gap:14px;align-items:start}
+.play-panel,.board-panel{background:var(--navy);border:2px solid var(--line);padding:15px}
+.play-panel{border-top:6px solid var(--yellow)}
+.play-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.player-badge{border:2px solid #fff;padding:6px 9px;font-size:13px;font-weight:900}
+.player-badge i{display:inline-block;width:13px;height:13px;background:var(--house);vertical-align:-2px;margin-right:5px}
+.session-clock{border:1px solid #6178bd;padding:6px 9px;font:700 12px "SF Mono",Menlo,monospace;color:#fff}
+.session-clock strong{color:var(--yellow);margin-left:5px}
+.timer-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#101d49;border:2px solid #5069b3;padding:11px 14px;margin:10px 0}
+.timer-copy{font-size:15px;font-weight:900;text-transform:uppercase}
+.timer{font:1000 clamp(44px,8vw,76px)/.9 "SF Mono",Menlo,monospace;color:var(--yellow);letter-spacing:-.1em;white-space:nowrap}
+.timer small{font:700 13px "SF Mono",Menlo,monospace;letter-spacing:0;margin-left:5px;color:#fff}
+.timer-track{height:8px;background:#070b1a;margin:-10px 0 14px;border:1px solid #31467f}
+.timer-fill{height:100%;width:100%;background:var(--yellow)}
+.instruction{font-size:22px;font-weight:1000;margin:8px 0 4px}
+.sub-instruction{font-size:14px;color:var(--soft);margin-bottom:10px}
+.recipe{display:flex;align-items:center;justify-content:center;gap:12px;min-height:125px;background:#080d20;border:2px solid #354b86;padding:9px}
+.recipe-item{display:grid;place-items:center;gap:4px;width:118px;min-height:103px;border:2px solid #5570bc;background:#101a3d;padding:5px}
+.recipe-item svg{width:65px;height:59px;image-rendering:pixelated}
+.recipe-item span{font:700 11px "SF Mono",Menlo,monospace;text-align:center}
+.plus{font:1000 25px "SF Mono",Menlo,monospace;color:var(--yellow)}
+.ingredient-title{font-size:15px;font-weight:900;margin:15px 0 7px}
+.ingredient-tray{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.ingredient-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:94px;background:#111c42;color:#fff;border:2px solid #354b86;padding:6px}
+.ingredient-choice:hover{border-color:#9db3ff}
+.ingredient-choice.selected{border:3px solid var(--yellow);background:#1a2c62;box-shadow:3px 3px 0 #000}
+.ingredient-choice svg{width:52px;height:48px}
+.ingredient-choice span{font:700 11px "SF Mono",Menlo,monospace;text-align:center}
+.selection-count{font-size:13px;color:var(--soft);margin:7px 0}
+.mix-button{width:100%;min-height:54px;background:var(--blue);color:#fff;box-shadow:0 6px 0 #112d8c;font-size:19px}
+.mix-button:disabled{opacity:.45;cursor:not-allowed}
+.message{min-height:45px;padding:10px 12px;background:#090e20;border:2px solid #394d85;margin-top:14px;font-size:15px;font-weight:900}
+.message.good{border-color:#a6dc55;color:#d4ff8f}
+.message.bad{border-color:#ff555e;color:#ffb4b7;display:flex;align-items:center;gap:10px}
+.message.bad svg{width:36px;height:36px;flex:none}
+.message.neutral{color:#fff}
+.score-note{color:#e1e7f8;font-size:13px;margin-top:9px}
+.board-panel h2{font-size:19px;margin:0 0 3px}
+.board-sub{font-size:12px;color:#d2daf0;margin-bottom:9px}
+.rank-row{display:grid;grid-template-columns:27px 17px 1fr auto;align-items:center;gap:7px;padding:8px 5px;border-top:1px solid #33477f;font-size:13px}
+.rank-row.current{background:#172750;border:2px solid var(--yellow);padding:6px 4px}
+.rank-number{font:900 13px "SF Mono",Menlo,monospace;color:#fff}
+.rank-row:first-of-type .rank-number{color:var(--yellow)}
+.rank-color{width:15px;height:15px;background:var(--house);border:1px solid #fff}
+.rank-row strong{font-size:13px}
+.rank-score{font:800 12px "SF Mono",Menlo,monospace;color:#eef2ff}
+.game-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:13px;flex-wrap:wrap}
+.change-player{background:transparent;color:#fff;border:1px solid #7186c1;padding:8px 10px;font:700 12px "SF Mono",Menlo,monospace}
+.time-up{max-width:720px;margin:12vh auto 0;padding:28px;background:var(--navy);border:3px solid var(--yellow);box-shadow:8px 8px 0 #172d75;text-align:center}
+.time-up svg{width:100px;height:100px;margin-bottom:12px}
+.time-up h1{margin-bottom:10px}.time-up p{font-size:18px}
+@media(max-width:820px){.game-layout{grid-template-columns:1fr}.board-panel{order:2}.rank-list{display:grid;grid-template-columns:1fr 1fr;column-gap:12px}}
+@media(max-width:520px){.app{padding:14px 10px 30px}.topbar{align-items:flex-start}.brand{font-size:21px}.settings{width:100%}.setting{flex:1;padding:8px 5px}.setup-wrap{margin-top:14px}.house-grid{gap:6px}.house-card{min-height:55px;padding:6px}.house-name{font-size:13px}.play-panel,.board-panel{padding:10px}.timer-row{padding:9px}.timer-copy{font-size:12px}.timer{font-size:49px}.instruction{font-size:19px}.recipe-item{width:105px}.ingredient-tray{grid-template-columns:1fr 1fr}.ingredient-choice{min-height:84px}.rank-list{grid-template-columns:1fr 1fr}.game-bottom{align-items:stretch}.change-player{width:100%}.limit-setting{align-items:flex-start;flex-direction:column}.time-up{margin-top:8vh;padding:18px}}
+.color-flash .play-panel{background:#ffdc4a;border-color:#fff}
+.color-flash .play-panel,.color-flash .play-panel p,.color-flash .play-panel .instruction,.color-flash .play-panel .sub-instruction{color:#101a3d}
+.color-flash .play-panel .timer{color:#183baf}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <div class="brand" aria-label="Potion Panic">
+      <svg viewBox="0 0 50 54" aria-hidden="true">
+        <path fill="#ffdc4a" d="M17 2h16v7h-4v9l12 12v20H9V30l12-12V9h-4z"/>
+        <path fill="#2455e8" d="M14 32h22v14H14z"/>
+        <path fill="#fff" d="M20 10h10v5H20zM17 29h6v6h-6zM29 24h5v5h-5z"/>
+        <path fill="#08132f" d="M9 47h32v5H9z"/>
+      </svg>
+      <div><span>POTION</span><b>PANIC</b></div>
+    </div>
+    <div class="settings" aria-label="Game settings">
+      <button class="setting" type="button" data-setting="sound" aria-pressed="true">Sound effects <strong>ON</strong></button>
+      <button class="setting" type="button" data-setting="colors" aria-pressed="true">Color change <strong>ON</strong></button>
+    </div>
+  </header>
+
+  <section class="screen active" id="joinScreen" aria-labelledby="joinTitle">
+    <div class="setup-wrap">
+      <h1 id="joinTitle">Join the game</h1>
+      <p class="steps">1. Pick a nickname. 2. Pick a house. 3. Start.</p>
+      <label class="name-label" for="playerName">Nickname</label>
+      <input class="name-input" id="playerName" maxlength="18" autocomplete="nickname" placeholder="Type a nickname">
+      <p class="name-rule">Inappropriate words are blocked.</p>
+      <p class="name-feedback" id="nameFeedback" aria-live="polite"></p>
+      <div class="house-label">Pick one house</div>
+      <div class="house-grid" id="housePicker" aria-label="Choose a house"></div>
+      <div class="limit-setting"><span>Play time limit</span><strong>5 minutes</strong></div>
+      <p class="limit-help" id="limitHelp">The timer starts when the game starts.</p>
+      <button class="start-button" id="startButton" type="button" disabled>Start game</button>
+    </div>
+  </section>
+
+  <section class="screen" id="gameScreen" aria-label="Potion Panic game">
+    <div class="game-layout">
+      <section class="play-panel">
+        <div class="play-head">
+          <div>
+            <h1>Brew a potion</h1>
+            <p class="sub-instruction">Choose the two matching pictures below.</p>
+          </div>
+          <div><div class="player-badge"><i id="playerColor"></i><span id="playerTag">Player</span> · <span id="houseTag">House</span></div><div class="session-clock">Session left<strong id="sessionClock">05:00</strong></div></div>
+        </div>
+
+        <div class="timer-row">
+          <span class="timer-copy">Time left</span>
+          <div class="timer"><span id="seconds">18</span><small>SEC</small></div>
+        </div>
+        <div class="timer-track" aria-label="Time remaining"><div class="timer-fill" id="timerFill"></div></div>
+
+        <div class="recipe" id="recipe" aria-label="The two ingredients to mix"></div>
+        <div class="ingredient-title">Pick these two ingredients</div>
+        <div class="ingredient-tray" id="ingredientTray"></div>
+        <p class="selection-count" id="selectionCount">Picked 0 of 2</p>
+        <button class="mix-button" id="mixButton" type="button" disabled>Brew potion</button>
+        <div class="message neutral" id="message" aria-live="polite">Choose the 2 pictures shown above.</div>
+        <p class="score-note">Right mix: earn house points. Wrong mix: BOOM!</p>
+        <div class="game-bottom"><button class="change-player" id="changePlayer" type="button">Change player</button></div>
+      </section>
+
+      <aside class="board-panel" aria-labelledby="boardTitle">
+        <h2 id="boardTitle">House scores</h2>
+        <p class="board-sub">Your points help your house win.</p>
+        <div class="rank-list" id="rankList"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="screen" id="limitScreen" aria-labelledby="timeUpTitle">
+    <div class="time-up">
+      <svg viewBox="0 0 100 100" role="img" aria-label="Blue and yellow clock">
+        <path fill="#ffdc4a" d="M18 8h64v12H18zM18 80h64v12H18zM24 20h12v18H24zM64 20h12v18H64zM36 38h28v12H36zM24 50h12v18H24zM64 50h12v18H64zM36 68h28v12H36z"/>
+        <path fill="#2455e8" d="M42 20h16v19H42zM36 39h28v28H36zM42 67h16v13H42z"/>
+      </svg>
+      <h1 id="timeUpTitle">Play time is up</h1>
+      <p>Take a break. Ask an adult to start another session.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  const houses = [
+    {name:"Khant", color:"#1749c9", score:0},
+    {name:"Yang", color:"#ed7d24", score:0},
+    {name:"Maza", color:"#d83d3d", score:0},
+    {name:"Tsa", color:"#858b94", score:0},
+    {name:"Tsen", color:"#7a49ca", score:0},
+    {name:"Hawt", color:"#a67a55", score:0},
+    {name:"Buhu", color:"#398d4f", score:0},
+    {name:"Irve", color:"#28b9cf", score:0}
+  ];
+  const ingredients = [
+    {id:"mushroom", name:"Mushroom"},
+    {id:"leaf", name:"Moon leaf"},
+    {id:"crystal", name:"Blue crystal"},
+    {id:"berry", name:"Sun berry"}
+  ];
+  const art = {
+    mushroom:'<svg viewBox="0 0 80 72" role="img" aria-label="Red mushroom"><path fill="#f04f61" d="M11 31 16 17 27 9 40 5 54 9 65 17 70 31 63 35 17 35Z"/><path fill="#fff1db" d="M36 34h13v25H36zM31 54h24v8H31z"/><path fill="#fff" d="M29 16h7v7h-7zM49 12h6v6h-6zM57 23h7v6h-7zM18 25h6v5h-6z"/><path fill="#a32c43" d="M18 34h45v5H18z"/></svg>',
+    leaf:'<svg viewBox="0 0 80 72" role="img" aria-label="Green moon leaf"><path fill="#70d556" d="M13 55C10 29 27 9 67 7 65 42 45 63 13 55Z"/><path fill="#2c9144" d="M13 57 54 18l5 2-43 41Z"/><path fill="#a7f27a" d="M24 45 21 31l5-3 3 12zM37 33l-1-13 6-3 1 12zM45 48l12-2 3-6-12 2z"/></svg>',
+    crystal:'<svg viewBox="0 0 80 72" role="img" aria-label="Blue crystal"><path fill="#39b9ff" d="M28 6h23l17 22-28 39L13 28z"/><path fill="#8be1ff" d="M28 6 40 67 13 28z"/><path fill="#1765d9" d="M51 6 40 67 68 28z"/><path fill="#d8f7ff" d="M28 6h23l-11 22z"/></svg>',
+    berry:'<svg viewBox="0 0 80 72" role="img" aria-label="Golden sun berry"><path fill="#ffb21d" d="M40 17 48 27 61 22 59 36 71 43 58 50 59 63 45 59 37 70 30 58 16 62 19 48 8 40 21 34 20 20 33 25z"/><path fill="#ffeb63" d="M34 31h12v12H34zM26 44h8v8h-8z"/><path fill="#d87b11" d="M46 44h10v10H46z"/></svg>'
+  };
+  const blockedNameWords = ["ass","asshole","bastard","bitch","boob","boobs","bullshit","cock","cocksucker","cum","cunt","dick","dildo","fag","faggot","fuck","fucker","fucking","kike","motherfucker","nazi","nigger","nigga","penis","piss","porn","prick","pussy","rape","retard","sex","sexual","shit","slut","spic","tits","twat","vagina","wank","whore"];
+  const sessionKey = "potion-panic-session-v2-five-minute";
+  const sessionDurationSeconds = 5 * 60;
+
+  let chosenHouse = null;
+  let playerName = "";
+  let selected = [];
+  let recipePair = [];
+  let seconds = 18;
+  let timerId = null;
+  let nextRoundId = null;
+  let busy = false;
+  let soundOn = true;
+  let colorChangeOn = true;
+  let audioContext = null;
+  let sessionStarted = false;
+  let sessionOver = false;
+  let sessionSeconds = 0;
+  let sessionEndsAt = 0;
+  let sessionTimerId = null;
+
+  const joinScreen = document.getElementById("joinScreen");
+  const gameScreen = document.getElementById("gameScreen");
+  const playerNameInput = document.getElementById("playerName");
+  const nameFeedback = document.getElementById("nameFeedback");
+  const startButton = document.getElementById("startButton");
+  const sessionClock = document.getElementById("sessionClock");
+  const limitHelp = document.getElementById("limitHelp");
+  const limitScreen = document.getElementById("limitScreen");
+  const housePicker = document.getElementById("housePicker");
+  const secondsLabel = document.getElementById("seconds");
+  const timerFill = document.getElementById("timerFill");
+  const recipe = document.getElementById("recipe");
+  const ingredientTray = document.getElementById("ingredientTray");
+  const selectionCount = document.getElementById("selectionCount");
+  const mixButton = document.getElementById("mixButton");
+  const message = document.getElementById("message");
+  const rankList = document.getElementById("rankList");
+
+  function makeHousePicker(){
+    houses.forEach(function(house){
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "house-card";
+      button.dataset.house = house.name;
+      button.setAttribute("aria-pressed","false");
+      button.style.setProperty("--house",house.color);
+      button.innerHTML = '<i class="swatch" aria-hidden="true"></i><span class="house-name"></span>';
+      button.querySelector(".house-name").textContent = house.name;
+      button.addEventListener("click",function(){
+        chosenHouse = house;
+        housePicker.querySelectorAll(".house-card").forEach(function(card){
+          const isChosen = card.dataset.house === house.name;
+          card.classList.toggle("selected",isChosen);
+          card.setAttribute("aria-pressed",String(isChosen));
+        });
+        updateStartButton();
+      });
+      housePicker.appendChild(button);
+    });
+  }
+
+  function normalizeNamePart(value){
+    return value.normalize("NFKD").toLowerCase().replace(/[\u0300-\u036f]/g,"").replace(/[0]/g,"o").replace(/[1!]/g,"i").replace(/[3]/g,"e").replace(/[4@]/g,"a").replace(/[5$]/g,"s").replace(/[7]/g,"t").replace(/[^a-z0-9]/g,"");
+  }
+
+  function hasInappropriateName(value){
+    const words = value.toLowerCase().split(/\s+/).map(normalizeNamePart).filter(Boolean);
+    const joined = normalizeNamePart(value.replace(/\s/g,""));
+    return blockedNameWords.some(function(word){
+      return words.indexOf(word) !== -1 || (word.length >= 4 && joined.indexOf(word) !== -1);
+    });
+  }
+
+  function updateStartButton(){
+    const name = playerNameInput.value.trim();
+    const inappropriate = name && hasInappropriateName(name);
+    nameFeedback.textContent = inappropriate ? "That nickname is not allowed. Pick another." : "";
+    startButton.disabled = !name || !chosenHouse || inappropriate || sessionOver;
+  }
+
+  playerNameInput.addEventListener("input",updateStartButton);
+
+  document.querySelectorAll("[data-setting]").forEach(function(button){
+    button.addEventListener("click",function(){
+      const setting = button.dataset.setting;
+      if(setting === "sound") soundOn = !soundOn;
+      if(setting === "colors") colorChangeOn = !colorChangeOn;
+      updateSettings();
+    });
+  });
+
+  function updateSettings(){
+    document.querySelectorAll("[data-setting]").forEach(function(button){
+      const on = button.dataset.setting === "sound" ? soundOn : colorChangeOn;
+      button.setAttribute("aria-pressed",String(on));
+      button.querySelector("strong").textContent = on ? "ON" : "OFF";
+    });
+  }
+
+  function setScreen(screen){
+    joinScreen.classList.toggle("active",screen === "join");
+    gameScreen.classList.toggle("active",screen === "game");
+    limitScreen.classList.toggle("active",screen === "limit");
+  }
+
+  function formattedSessionTime(){
+    const minutes = String(Math.floor(sessionSeconds / 60)).padStart(2,"0");
+    const secondsLeft = String(sessionSeconds % 60).padStart(2,"0");
+    return minutes + ":" + secondsLeft;
+  }
+
+  function updateSessionClock(){
+    sessionClock.textContent = formattedSessionTime();
+    limitHelp.textContent = sessionStarted ? "Session time left: " + formattedSessionTime() : "The timer starts when the game starts.";
+  }
+
+  function saveSession(){
+    try{
+      localStorage.setItem(sessionKey,JSON.stringify({expiresAt:sessionEndsAt}));
+    }catch(error){
+      // The timer still works for this page if browser storage is unavailable.
+    }
+  }
+
+  function endSession(){
+    sessionOver = true;
+    sessionSeconds = 0;
+    window.clearInterval(sessionTimerId);
+    window.clearInterval(timerId);
+    window.clearTimeout(nextRoundId);
+    busy = true;
+    updateSessionClock();
+    try{localStorage.removeItem(sessionKey);}catch(error){}
+    setScreen("limit");
+    updateStartButton();
+  }
+
+  function tickSession(){
+    if(sessionOver) return;
+    sessionSeconds = Math.max(0,Math.ceil((sessionEndsAt - Date.now()) / 1000));
+    updateSessionClock();
+    if(sessionSeconds === 0){
+      endSession();
+    }
+  }
+
+  function beginSession(){
+    if(sessionStarted) return;
+    sessionStarted = true;
+    sessionEndsAt = Date.now() + sessionDurationSeconds * 1000;
+    sessionSeconds = Math.ceil((sessionEndsAt - Date.now()) / 1000);
+    updateSessionClock();
+    saveSession();
+    sessionTimerId = window.setInterval(tickSession,1000);
+  }
+
+  function restoreSession(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(sessionKey) || "null");
+      if(!saved || typeof saved.expiresAt !== "number" || saved.expiresAt <= Date.now()){
+        localStorage.removeItem(sessionKey);
+        return;
+      }
+      sessionStarted = true;
+      sessionEndsAt = saved.expiresAt;
+      sessionSeconds = Math.ceil((saved.expiresAt - Date.now()) / 1000);
+      updateSessionClock();
+      sessionTimerId = window.setInterval(tickSession,1000);
+    }catch(error){
+      sessionStarted = false;
+    }
+  }
+
+  function startGame(){
+    playerName = playerNameInput.value.trim();
+    if(!playerName || !chosenHouse || hasInappropriateName(playerName) || sessionOver) return;
+    beginSession();
+    getAudio();
+    document.getElementById("playerTag").textContent = playerName;
+    document.getElementById("houseTag").textContent = chosenHouse.name;
+    document.getElementById("playerColor").style.setProperty("--house",chosenHouse.color);
+    setScreen("game");
+    renderScores();
+    startRound();
+  }
+
+  function svgFor(id){
+    return art[id];
+  }
+
+  function renderRecipe(){
+    recipe.replaceChildren();
+    recipePair = ingredients.slice().sort(function(){return Math.random() - .5;}).slice(0,2).map(function(item){return item.id;});
+    recipePair.forEach(function(id,index){
+      const item = ingredients.find(function(ingredient){return ingredient.id === id;});
+      if(index > 0){
+        const plus = document.createElement("b");
+        plus.className = "plus";
+        plus.textContent = "+";
+        recipe.appendChild(plus);
+      }
+      const tile = document.createElement("div");
+      tile.className = "recipe-item";
+      tile.innerHTML = svgFor(id) + '<span></span>';
+      tile.querySelector("span").textContent = item.name.toUpperCase();
+      recipe.appendChild(tile);
+    });
+  }
+
+  function renderTray(){
+    ingredients.forEach(function(item){
+      let button = ingredientTray.querySelector('[data-ingredient="' + item.id + '"]');
+      if(!button){
+        button = document.createElement("button");
+        button.type = "button";
+        button.className = "ingredient-choice";
+        button.dataset.ingredient = item.id;
+        button.innerHTML = svgFor(item.id) + '<span></span>';
+        button.querySelector("span").textContent = item.name;
+        button.addEventListener("click",function(){toggleIngredient(item.id);});
+        ingredientTray.appendChild(button);
+      }
+      const isSelected = selected.indexOf(item.id) !== -1;
+      button.setAttribute("aria-pressed",String(isSelected));
+      button.classList.toggle("selected",isSelected);
+      button.disabled = busy;
+    });
+  }
+
+  function toggleIngredient(id){
+    if(busy) return;
+    const existing = selected.indexOf(id);
+    if(existing !== -1){
+      selected.splice(existing,1);
+    }else if(selected.length < 2){
+      selected.push(id);
+    }
+    renderTray();
+    selectionCount.textContent = "Picked " + selected.length + " of 2";
+    mixButton.disabled = selected.length !== 2 || busy;
+  }
+
+  function setMessage(text,type){
+    message.className = "message " + type;
+    if(type === "bad" && text.indexOf("BOOM!") === 0){
+      message.innerHTML = '<svg viewBox="0 0 50 50" aria-hidden="true"><path fill="#ff555e" d="M18 0h14v9h9v9h9v14h-9v9h-9v9H18v-9H9v-9H0V18h9V9h9z"/><path fill="#ffdc4a" d="M18 16h14v18H18z"/></svg><span></span>';
+      message.querySelector("span").textContent = text;
+    }else{
+      message.textContent = text;
+    }
+  }
+
+  function startRound(){
+    window.clearInterval(timerId);
+    window.clearTimeout(nextRoundId);
+    busy = false;
+    selected = [];
+    seconds = 18;
+    document.body.classList.remove("color-flash");
+    renderRecipe();
+    renderTray();
+    selectionCount.textContent = "Picked 0 of 2";
+    mixButton.disabled = true;
+    mixButton.textContent = "Brew potion";
+    setMessage("Choose the 2 pictures shown above.","neutral");
+    updateTimer();
+    timerId = window.setInterval(function(){
+      if(busy) return;
+      seconds -= 1;
+      updateTimer();
+      if(seconds > 0 && seconds <= 5) playTick();
+      if(seconds <= 0){
+        window.clearInterval(timerId);
+        busy = true;
+        renderTray();
+        mixButton.disabled = true;
+        setMessage("Time's up! Get ready for the next one.","bad");
+        nextRoundId = window.setTimeout(startRound,1400);
+      }
+    },1000);
+  }
+
+  function updateTimer(){
+    secondsLabel.textContent = String(Math.max(0,seconds));
+    timerFill.style.width = (Math.max(0,seconds) / 18 * 100) + "%";
+  }
+
+  function mixPotion(){
+    if(busy || selected.length !== 2) return;
+    window.clearInterval(timerId);
+    busy = true;
+    renderTray();
+    mixButton.disabled = true;
+    const right = selected.slice().sort().join("|") === recipePair.slice().sort().join("|");
+    if(right){
+      chosenHouse.score += 10;
+      renderScores();
+      setMessage("Correct brew! +10 points for " + chosenHouse.name + ".","good");
+      playSuccess();
+    }else{
+      setMessage("BOOM! Wrong brew. Try the next one.","bad");
+      playBoom();
+      if(colorChangeOn){
+        document.body.classList.add("color-flash");
+        window.setTimeout(function(){document.body.classList.remove("color-flash");},220);
+      }
+    }
+    nextRoundId = window.setTimeout(startRound,1450);
+  }
+
+  function renderScores(){
+    rankList.replaceChildren();
+    houses.slice().sort(function(a,b){return b.score - a.score || houses.indexOf(a) - houses.indexOf(b);}).forEach(function(house,index){
+      const row = document.createElement("div");
+      row.className = "rank-row";
+      if(house === chosenHouse) row.classList.add("current");
+      row.innerHTML = '<span class="rank-number"></span><i class="rank-color" aria-hidden="true"></i><strong></strong><b class="rank-score"></b>';
+      row.querySelector(".rank-number").textContent = String(index + 1);
+      row.querySelector(".rank-color").style.setProperty("--house",house.color);
+      row.querySelector("strong").textContent = house.name;
+      row.querySelector(".rank-score").textContent = String(house.score);
+      rankList.appendChild(row);
+    });
+  }
+
+  function getAudio(){
+    if(!soundOn) return null;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContextClass) return null;
+    if(!audioContext) audioContext = new AudioContextClass();
+    if(audioContext.state === "suspended") audioContext.resume();
+    return audioContext;
+  }
+
+  function tone(frequency,duration,shape,gainValue,delay){
+    const context = getAudio();
+    if(!context) return;
+    const start = context.currentTime + (delay || 0);
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = shape || "square";
+    oscillator.frequency.setValueAtTime(frequency,start);
+    gain.gain.setValueAtTime(gainValue || .12,start);
+    gain.gain.exponentialRampToValueAtTime(.001,start + duration);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration);
+  }
+
+  function playSuccess(){
+    tone(523,.12,"square",.12,0);
+    tone(659,.12,"square",.12,.12);
+    tone(784,.18,"square",.12,.24);
+  }
+
+  function playBoom(){
+    tone(155,.28,"sawtooth",.22,0);
+    tone(105,.35,"square",.18,.08);
+  }
+
+  function playTick(){
+    tone(880,.045,"square",.075,0);
+  }
+
+  startButton.addEventListener("click",startGame);
+  mixButton.addEventListener("click",mixPotion);
+  document.getElementById("changePlayer").addEventListener("click",function(){
+    window.clearInterval(timerId);
+    window.clearTimeout(nextRoundId);
+    setScreen("join");
+    playerNameInput.value = playerName;
+    updateStartButton();
+  });
+
+  makeHousePicker();
+  updateSettings();
+  updateSessionClock();
+  restoreSession();
+})();
+</script>
+</body>
+</html>
